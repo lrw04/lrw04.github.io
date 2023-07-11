@@ -1,0 +1,91 @@
+---
+(:date "2023/05/07")
+---
+
+# Lisp 的实现思路
+
+更新：我已经实现了一个基本的 Lisp 解释器，仓库在 @(https://github.com/lrw04/mehlisp)(mehlisp)。由于这个解释器没有 vectors，我还会用 C 实现另一个 Lisp 解释器，并打算在其基础上实现一个字节码编译器。
+
+最近在写一个 Lisp 解释器，过程中遇到了不少困难，因此想以一篇博文的形式整理思路。
+
+相比起类 C 语法语言来说，Lisp 的前端要简单得多，但是 Lisp 有一些特性使它的后端复杂度更高：
+
+:ul
+闭包
+
+GC
+
+Static scoping
+:end
+
+首先列举出实现过程中可以参考的一些资料：
+
+## 参考资料
+
+:ul
+*Lisp 1.5 Programmer's Manual*
+
+*Structure and Interpretation of Computer Programs*
+
+*Scheme 9 from Empty Space*
+:end
+
+需要注意的是，按我的理解，*Lisp 1.5 Programmer's Manual* 实现的是 dynamic scoping 的 Lisp，因为它没有环境的树，而是一条环境链。
+
+同时，*SICP* 的讲法和 *S9FES* 的讲法有所不同，*S9FES* 中原子的存储和 cons-cells 共用一个存储池而且单独占一个 cell，而在 *SICP* 中原子似乎是定长的结构（提到过一嘴不定长，但似乎没有细讲）。符号可以做到定长，因为符号有一个 intern 的过程，这个过程可以用 trie 树一定地优化，输出的就是一个指针。Tagged pointer 本身就可以表示一个数字或者一个符号。
+
+*S9FES* 实现的是 $\text{R}^5\text{RS}$，标准中是包含字符串和数组的。像《编译原理》中所说，内存分配的单位如果等长，将会极大地简化垃圾回收器的设计。然而字符串和数组如果要分配连续的地址空间，就会破坏原本等长的分配单元性质。另外一个项目是 @(https://github.com/rui314/minilisp)(https://github.com/rui314/minilisp)，为所有的值，包括环境都分配在了同一个寻址空间，并使用了一个 copying garbage collector。
+
+## 基本构成
+
+因此，一个 Lisp 实现可以分为以下的部件：
+
+:ul
+内存管理；
+
+read；
+
+eval/apply；
+
+print；
+
+标准库。
+:end
+
+### 内存管理
+
+内存管理是 Lisp 程序运行时环境中极为关键的一部分，因为 Lisp 程序运行的过程中会产生很多仅由中间过程使用的数据，比如尾递归过程写 map 会最后先产生反向的列表。
+
+这里的设计还会影响到日后的扩展：如果使用了多于两个内存池，就可能在 bare metal 环境下难运行。在有操作系统，可以用 malloc 和 realloc 的情况下无论是管理多个内存池还是扩展内存池都会容易些。
+
+### 标准库
+
+标准库、内置的 primitive 和 special forms 构成了用户的编程环境。应该保持解释器/编译器的最小性，然后用库扩展语言。Lisp 的语言扩展机制有函数和宏两种，分别应该在扩展没有和有特殊的求值规则时使用。Common Lisp 的 special forms 可以在@(http://www.lispworks.com/documentation/HyperSpec/Body/03_ababa.htm)(这里)找到，但我没有找到 Scheme 的对应列表。有的文档认为如 let 也是 special form，我认为是不准确的。
+
+## 最小构成
+
+在这一节中，我想总结上面讨论的内容并给出一个最小化 Lisp 的设计。这个设计更接近 Common Lisp，但去掉了不少功能。
+
+值包括以下的：
+
+:ul
+数字（C long double）
+
+符号
+
+cons
+
+闭包
+
+宏
+
+环境
+
+C 函数
+
+nil
+:end
+
+这样设计的目的是使 tagged pointer 等长，能简化垃圾回收的设计。符号如上文所述可以用 trie 树作为 obarray。闭包和环境与 cons 共用结构，但是在 Lisp 中用 cons? 会返回 nil。
+
+初始环境还没有决定好。

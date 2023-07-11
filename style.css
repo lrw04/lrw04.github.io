@@ -1,0 +1,71 @@
+nav img {
+    max-height: 2em;
+    border: 1pt solid #ddd;
+    border-radius: 0.5ex;
+    padding: 0.5ex;
+    margin-right: 0.5ex
+}
+
+nav a {
+    color: darkblue;
+    text-decoration: none;
+    line-height: normal;
+    vertical-align: middle;
+    display: flex;
+    align-items: center;
+    margin-left: 2ex;
+}
+
+nav {
+    margin-left: 2ex;
+    margin-top: 2ex;
+    display: flex;
+    align-items: center;
+}
+
+main {
+    max-width: 70ex;
+    margin: auto;
+    padding: 2ex;
+    margin-top: 1em;
+}
+
+figure {
+    text-align: center;
+}
+
+figure img {
+    max-width: 100%;
+}
+
+table {
+    width: 100%;
+}
+
+footer {
+    text-align: center;
+}
+
+.pride {
+    display: inline-block;
+    width: 10ex;
+    aspect-ratio: 14 / 9;
+    background: conic-gradient(at 14% 50%, #0000 221.25deg, white 222deg 318deg, #0000 318.25deg), conic-gradient(at 23% 50%, #0000 221.25deg, #ffa6b9 222deg 318deg, #0000 318.25deg), conic-gradient(at 32% 50%, #0000 221.25deg, #00d2ff 222deg 318deg, #0000 318.25deg), conic-gradient(at 41% 50%, #0000 221.25deg, #753000 222deg 318deg, #0000 318.25deg), conic-gradient(at 50% 50%, #0000 221.25deg, black 222deg 318deg, #0000 318.25deg), linear-gradient(red 0 16.66%, orange 0 33.33%, yellow 0 50%, green 0 66.66%, blue 0 83.33%, indigo 0);
+    box-shadow: 0 0 0 0.5px;
+}
+
+td,
+th {
+    border-bottom: 0.1rem solid #e1e1e1;
+    padding: 1.2rem 1.5rem;
+}
+
+td:first-child,
+th:first-child {
+    padding-left: 0;
+}
+
+td:last-child,
+th:last-child {
+    padding-right: 0;
+}
