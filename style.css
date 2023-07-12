@@ -50,7 +50,7 @@ footer {
     display: inline-block;
     width: 10ex;
     aspect-ratio: 14 / 9;
-    background: conic-gradient(at 14% 50%, #0000 221.25deg, white 222deg 318deg, #0000 318.25deg), conic-gradient(at 23% 50%, #0000 221.25deg, #ffa6b9 222deg 318deg, #0000 318.25deg), conic-gradient(at 32% 50%, #0000 221.25deg, #00d2ff 222deg 318deg, #0000 318.25deg), conic-gradient(at 41% 50%, #0000 221.25deg, #753000 222deg 318deg, #0000 318.25deg), conic-gradient(at 50% 50%, #0000 221.25deg, black 222deg 318deg, #0000 318.25deg), linear-gradient(red 0 16.66%, orange 0 33.33%, yellow 0 50%, green 0 66.66%, blue 0 83.33%, indigo 0);
+    background: linear-gradient(#59cbe8 20%, #F5ACB9 0 40%, white 0 60%, #F5ACB9 0 80%, #59cbe8 0);
     box-shadow: 0 0 0 0.5px;
 }
 
@@ -68,4 +68,29 @@ th:first-child {
 td:last-child,
 th:last-child {
     padding-right: 0;
+}
+
+.thm, .proof, .problem, .solution {
+    padding-left: 1ex;
+    border-left: 0.5ex solid lightgray;
+}
+
+.thm::before {
+    content: '定理';
+    font-weight: bold;
+}
+
+.proof::before {
+    content: '证明';
+    font-weight: bold;
+}
+
+.problem::before {
+    content: '问题';
+    font-weight: bold;
+}
+
+.solution::before {
+    content: '解';
+    font-weight: bold;
 }

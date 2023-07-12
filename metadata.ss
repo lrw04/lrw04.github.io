@@ -1,6 +1,7 @@
 `((propagation-rules . ((nav . ,use-child)
                         (footer . ,use-child)
-                        (page . ,use-child)))
+                        (page . ,use-child)
+                        (date . ,use-child)))
   (config . ((title . "wlr 的博客")
              (link . "https://blog.lrw04.online/")
              (index-template . ,(lambda (config files)
@@ -23,7 +24,8 @@
                                                                    (lambda (a b)
                                                                      (string>? (file-date a) (file-date b)))
                                                                    (remp (lambda (file) (read-config (file-metadata file) 'page)) files))))))))
-                                      ,(read-config config 'footer)))))
+                                      ,(read-config config 'footer)
+                                      (script ((src . "https://cdn.jsdelivr.net/npm/pangu@4.0.7/dist/browser/pangu.min.js")) ())))))
              (template . ,(lambda (config document)
                             (default-base
                               `((link ((rel . "stylesheet")
@@ -40,10 +42,14 @@
                                 (script ((src . "https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-core.min.js")) ())
                                 (script ((src . "https://cdn.jsdelivr.net/npm/prismjs@1/plugins/autoloader/prism-autoloader.min.js")) ())
                                 (script ((src . "https://cdn.jsdelivr.net/npm/katex@0/dist/katex.min.js")) ())
+                                (script ((src . "svg-resize.js")) ())
                                 (script () ((raw ,(string-append "const macros = " (make-katex-macros (cdr (assoc 'latex-macros config)))))))
-                                (script ((src . "katex-loader.js")) ())
-                                (script ((src . "svg-resize.js")) ())))))
-             (processors . ((,(make-tag-pred 'latex) . ,(lambda (config t)
+                                (script ((src . "katex-loader.js")) ())))))
+             (processors . ((,char? . ,(lambda (config t) (escape-string (string t) '((#\。 . "．")))))
+                            (,(make-tag-pred 'div) . ,(lambda (config t)
+                                                        `(div ((class . ,(symbol->string (cadr t))))
+                                                              ,(process-subtree config (caddr t)))))
+                            (,(make-tag-pred 'latex) . ,(lambda (config t)
                                                           (if (file-exists? "tmp.tex") (error 'latex-proc "tmp.tex exists"))
                                                           (let* ((text (cadr t))
                                                                  (latex-source (string-append "\\documentclass{standalone}"
@@ -59,7 +65,7 @@
                                                             (display latex-source port)
                                                             (close-output-port port)
                                                             (system "tectonic tmp.tex")
-                                                            (system "dvisvgm --pdf -f ttf tmp.pdf")
+                                                            (system "dvisvgm --pdf -f woff2 tmp.pdf")
                                                             ;; get svg
                                                             (delete-file "tmp.tex")
                                                             (delete-file "tmp.pdf")
@@ -72,7 +78,41 @@
                                                               (delete-file "tmp.svg")
                                                               `(raw ,svg)))))))
              (desc . "Documentation for bwog, a static blog generator written in Scheme.")
-             (latex-macros . ())
+             (latex-macros . (("\\Gal" 0 "\\operatorname{Gal}")
+                              ("\\tr" 0 "\\operatorname{tr}")
+                              ("\\GL" 0 "\\operatorname{GL}")
+                              ("\\SL" 0 "\\operatorname{SL}")
+                              ("\\PSL" 0 "\\operatorname{PSL}")
+                              ("\\SO" 0 "\\operatorname{SO}")
+                              ("\\SU" 0 "\\operatorname{SU}")
+                              ("\\im" 0 "\\operatorname{im}")
+                              ("\\cof" 0 "\\operatorname{cof}")
+                              ("\\End" 0 "\\operatorname{End}")
+                              ("\\Tor" 0 "\\operatorname{Tor}")
+                              ("\\rk" 0 "\\operatorname{rk}")
+                              ("\\Hom" 0 "\\operatorname{Hom}")
+                              ("\\diag" 0 "\\operatorname{diag}")
+                              ("\\vspan" 0 "\\operatorname{span}")
+                              ("\\lcm" 0 "\\operatorname{lcm}")
+                              ("\\id" 0 "\\operatorname{id}")
+                              ("\\Ab" 0 "\\textsf{Ab}")
+                              ("\\Fld" 0 "\\textsf{Fld}")
+                              ("\\Mod" 1 "#1\\textsf{-Mod}")
+                              ("\\Grp" 0 "\\textsf{Grp}")
+                              ("\\dSet" 1 "#1\\textsf{-Set}")
+                              ("\\Set" 0 "\\textsf{Set}")
+                              ("\\SetStar" 0 "\\textsf{Set*}")
+                              ("\\Vect" 1 "#1\\textsf{-Vect}")
+                              ("\\Alg" 1 "#1\\textsf{-Alg}")
+                              ("\\Ring" 0 "\\textsf{Ring}")
+                              ("\\R" 0 "\\mathbb{R}")
+                              ("\\C" 0 "\\mathbb{C}")
+                              ("\\N" 0 "\\mathbb{N}")
+                              ("\\Z" 0 "\\mathbb{Z}")
+                              ("\\Q" 0 "\\mathbb{Q}")
+                              ("\\F" 0 "\\mathbb{F}")
+                              ("\\sfC" 0 "\\mathsf{C}")
+                              ("\\vphi" 0 "\\varphi")))
              (nav . (header ()
                             ((nav ()
                                   ((a ((href . "index.html"))
@@ -86,19 +126,18 @@
                                    ((a ((href . "feed.xml"))
                                        ("RSS Feed"))))
                                 (p ()
-                                   ("Generated with bwog"))
-                                (p ()
-                                   ((div ((class . "pride")) ()))))))
+                                   ("Generated with "
+                                    (a ((href . "https://github.com/lrw04/bwog/"))
+                                       ("bwog"))))                                
+                                (div ((class . "pride")) ()))))
              (preamble . "\\usepackage{amsmath, amssymb, amsthm, latexsym, mathrsfs, eucal, ctex}
 \\usepackage[dvipsnames]{xcolor}
 \\usepackage{tabularx, tikz-cd, tikz, bm}")))
   (files . ("about"
-            ;"after-comp"
-            ;"bwog"
-            ;"callcc-impl"
-            ;"cube-orientation"
-            ;"det-equality"
-            ;"heptadecagon"
+            "after-comp"
+            "cube-orientation"
+            "det-equality"
+            "heptadecagon"
             ;"homebrew-exam"
             ;"lisp-impl"
             ;"oj-sandbox"

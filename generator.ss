@@ -6,6 +6,7 @@
           use-child
           use-appended
           use-string-append
+          process-subtree
           make-tag-pred
           default-config
           default-base
