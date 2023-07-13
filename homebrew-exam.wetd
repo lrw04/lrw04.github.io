@@ -1,0 +1,13 @@
+`((title . "报复性的自作考试卷")
+  (date . "2022/08/13"))
+---
+
+!(h 1)报复性的自作考试卷
+
+考完高考数学之后十分沮丧，加紧把这份之前就计划的钓鱼卷弄好了。
+
+试卷：@(link "https://pub.lrw04.online/shiken/exam.pdf")*@(em)*exam.pdf**
+
+答案：@(link "https://pub.lrw04.online/shiken/keys.pdf")*@(em)*keys.pdf**
+
+感谢 mercec 的题目和验证工作。

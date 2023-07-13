@@ -64,8 +64,8 @@
                                                                                               (make-transcoder (utf-8-codec)))))
                                                             (display latex-source port)
                                                             (close-output-port port)
-                                                            (system "tectonic tmp.tex")
-                                                            (system "dvisvgm --pdf -f woff2 tmp.pdf")
+                                                            (system "tectonic tmp.tex -c minimal")
+                                                            (system "dvisvgm --pdf -f woff2 -v0 tmp.pdf")
                                                             ;; get svg
                                                             (delete-file "tmp.tex")
                                                             (delete-file "tmp.pdf")
@@ -135,14 +135,12 @@
 \\usepackage{tabularx, tikz-cd, tikz, bm}")))
   (files . ("about"
             "after-comp"
+            ;"bwog"
             "cube-orientation"
             "det-equality"
             "heptadecagon"
-            ;"homebrew-exam"
+            "homebrew-exam"
             ;"lisp-impl"
-            ;"oj-sandbox"
-            ;"poorman-mlp"
-            ;"quartic"
-            ;"ranobe-typeset"
-            ;"taca2021-commentary"
-            )))
+            "oj-sandbox"
+            "poorman-mlp"
+            "quartic")))
