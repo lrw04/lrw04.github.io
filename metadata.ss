@@ -24,8 +24,7 @@
                                                                    (lambda (a b)
                                                                      (string>? (file-date a) (file-date b)))
                                                                    (remp (lambda (file) (read-config (file-metadata file) 'page)) files))))))))
-                                      ,(read-config config 'footer)
-                                      (script ((src . "https://cdn.jsdelivr.net/npm/pangu@4.0.7/dist/browser/pangu.min.js")) ())))))
+                                      ,(read-config config 'footer)))))
              (template . ,(lambda (config document)
                             (default-base
                               `((link ((rel . "stylesheet")
