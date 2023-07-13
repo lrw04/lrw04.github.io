@@ -1,3 +1,7 @@
+html {
+    font-family: sans-serif;
+}
+
 nav img {
     max-height: 2em;
     border: 1pt solid #ddd;
