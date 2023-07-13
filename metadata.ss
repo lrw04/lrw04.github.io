@@ -135,7 +135,7 @@
 \\usepackage{tabularx, tikz-cd, tikz, bm}")))
   (files . ("about"
             "after-comp"
-            ;"bwog"
+            "bwog"
             "cube-orientation"
             "det-equality"
             "heptadecagon"
