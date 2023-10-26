@@ -142,4 +142,5 @@
             ;"lisp-impl"
             "oj-sandbox"
             "poorman-mlp"
-            "quartic")))
+            "quartic"
+            "syntax-rules")))

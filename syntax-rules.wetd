@@ -1,0 +1,645 @@
+`((title . "Implementing a loosened form of syntax-rules")
+  (date . "2023/10/26"))
+---
+
+!(h 1)Implementing a loosened form of syntax-rules
+
+Expanding out syntax-rules macros is the first step a Scheme program goes through in a compiler. Syntax-rules is the only macro system present in the R@(sup)*5*RS standard and the R@(sup)*7*RS-smal standard, two standards most implemented by implementers.
+
+There are multiple approaches to implementing syntax-rules in a Scheme implementation, including implementing explicit renaming macros and writing syntax-rules in terms of it as Chibi does, implementing syntax-case and writing syntax-rules in terms of it as Chez does, and implementing it directly. Implementing syntax-rules directly could be considered the most simple approach since it does not require the full Scheme language to be available at compile time, and this is the approach we will try out in this article.
+
+A note: the “loosened” in the title does not mean that the implemented pattern language is not in its fullest form, with ellipses and hygiene, but rather that error handling is loosened, as in many toy language implementations. However, you could add syntax checking as a separate pass in your compiler rather easily.
+
+We will start by implementing a simple pattern matcher, a more complex one, and finally completing the puzzle by implementing the transcriber for syntax-rules templates.
+
+!(h 2)A simple pattern matcher
+
+Let’s consider a minimal pattern matching language. We support matching conses of conses and symbols with another cons, creating bindings for the symbols present in the pattern. We express the bindings as an alist, so we could implement the matcher as a function:
+
+``(code scheme)
+(define match
+  (lambda (pattern form)
+    (letrec ((iter (lambda (pattern form acc)
+                     (cond ((not acc) #f)
+                           ((symbol? pattern)
+                            (cons (cons pattern form) acc))
+                           ((and (cons? pattern) (cons? form))
+                            (iter (cdr pattern)
+                                  (cdr form)
+                                  (iter (car pattern) (car form) acc)))
+                           (else #f)))))
+      (iter pattern form ‘()))))
+``
+
+!(h 2)The full pattern matcher
+
+Our previous pattern matcher is lacking ellipses support and the ability to specify symbols used as literals. However, before we advance in that route, we need to settle on a data structure for expressing the match result, since each symbol could be matched multiple times and nested differently.
+
+One might think of addressing that by representing match results in a list of alists for symbols nested one level deep, list of lists of alists for those nested two levels deep and so on, but that won’t work since in the template, the different template variables could be split and joined at will, as long as the nesting levels are correct in the standard.
+
+That was close to a valid solution though. We were getting a table of type index -> symbol -> match, but we could “transpose” the table to get an alist of symbol to a list or a match. That is what the following code does:
+
+``(code scheme)
+(define lookup
+  (lambda (env symbol)
+    (letrec ((lookup-frame (lambda (frame)
+                             (cond ((null? frame) #f)
+                                   ((eq? (caar frame) symbol) (car frame))
+                                   (else (lookup-frame (cdr frame))))))
+             (iter-frame (lambda (env)
+                           (if (null? env)
+                               #f
+                               (or (lookup-frame (car env)) (iter-frame (cdr env)))))))
+      (iter-frame env))))
+
+(define reverse-lookup
+  (lambda (env symbol)
+    (letrec ((lookup-frame (lambda (frame)
+                             (cond ((null? frame) #f)
+                                   ((eq? (cdar frame) symbol) (car frame))
+                                   (else (lookup-frame (cdr frame))))))
+             (iter-frame (lambda (env)
+                           (if (null? env)
+                               #f
+                               (or (lookup-frame (car env)) (iter-frame (cdr env)))))))
+      (iter-frame env))))
+
+(define fand
+  (lambda (l)
+    (if (null? l)
+        #t
+        (if (car l)
+            (fand (cdr l))
+            #f))))
+
+(define transpose-matches
+  (lambda (matches keys)
+    (map (lambda (key)
+           (cons key
+                 (map (lambda (al)
+                        (cdr (assq key al)))
+                      matches)))
+         keys)))
+
+(define scan-variables
+  (lambda (template acc)
+    (cond ((symbol? template)
+           (if (or (eq? template '...) (memq template acc))
+               acc
+               (cons template acc)))
+          ((vector? template)
+           (scan-variables (vector->list template) acc))
+          ((pair? template)
+           (scan-variables (cdr template)
+                           (scan-variables (car template) acc)))
+          (else
+           acc))))
+
+;; returns alist of matches or #f
+(define match-syntax-rules
+  (lambda (rule form literals acc)
+    (cond ((not acc)
+           #f)
+          ((and (null? rule) (null? form))
+           acc)
+          ((eq? rule '_)
+           acc)
+          ((and (symbol? rule) (not (memq rule literals)))
+           (cons (cons rule form) acc))
+          ((and (memq rule literals) (eq? rule form)) ; hygiene condition satisfied by renaming first
+           acc)
+          ((and (list? rule)
+                (= (length rule) 2)
+                (eq? (cadr rule) '...)
+                (list? form))
+           (let* ((pattern (car rule))
+                  (matches (map (lambda (form)
+                                  (match-syntax-rules pattern form literals '()))
+                                form)))
+             (if (fand matches)
+                 (append (transpose-matches matches (scan-variables pattern '())) acc)
+                 #f)))
+          ((and (vector? rule)
+                (vector? form))
+           (match-syntax-rules (vector->list rule)
+                               (vector->list form)
+                               literals
+                               acc))
+          ((and (pair? rule) (pair? form))
+           (match-syntax-rules (car rule)
+                               (car form)
+                               literals
+                               (match-syntax-rules (cdr rule)
+                                                   (cdr form)
+                                                   literals
+                                                   acc)))
+          ((equal? rule form)
+           acc)
+          (else #f))))
+``
+
+Note that we are misusing the list for representing multiple matches since a symbol could match a list as well. You could maintain a “levels of nesting” table for strict error checking.
+
+!(h 2)Transcribing the template
+
+Transcribing the template has its own difficulties. Let's take a look at this example:
+
+``(code scheme)
+(define-syntax let
+    (syntax-rules ()
+     ((_ ((name val) ...) body1 body2 ...)
+      ((lambda (name ...) body1 body2 ...)
+       val ...))))
+(define values 0)   
+(define-syntax id
+  (syntax-rules ()
+    ((id formals ...) (lambda (formals ...) (values formals ...)))))
+(let ((lambda 'not-anymore))
+  (id a))
+``
+
+Our transcription output must be an s-expression since we might need to repeatedly apply syntax transformers, and by the definition of syntactic closures, @(verb)`lambda` in the transcription output must still refer to the @(verb)`lambda` defined in the definition environment of the macro, which is the core form in Scheme. It is obvious that no matter how we choose to rename identifiers in the output since we have no way of referring to @(verb)`lambda` the core form.
+
+In fact, what we need is to rename all identifiers in advance, before feeding the program to the syntax expander, so that we are always able to refer to core forms as in the definition environment of the syntax transformer.
+
+During different transformations, it might not be obvious how an identifier may be used in the end, since a syntax transformer may be recursive. That's why we need to rename everything that is unbound after each transformation. Take a look at the following example:
+
+``(code scheme)
+(define-syntax let
+  (syntax-rules ()
+    ((_ ((name val) ...) body1 body2 ...)
+     ((lambda (name ...) body1 body2 ...)
+      val ...))))
+(define-syntax letrec
+  (syntax-rules ()
+    ((letrec ((var1 init1) ...) body ...)
+     (letrec "generate temp names"
+       (var1 ...)
+       ()
+       ((var1 init1) ...)
+       body ...))
+    ((letrec "generate temp names" ()
+             (temp1 ...)
+             ((var1 init1) ...)
+             body ...)
+     (let ((var1 (if #f #f)) ...)
+       (let ((temp1 init1) ...)
+         (set! var1 temp1)
+         ...
+         body ...)))
+    ((letrec "generate temp names" (x y ...)
+             (temp ...)
+             ((var1 init1) ...)
+             body ...)
+     (letrec "generate temp names" (y ...)
+             (newtemp temp ...)
+             ((var1 init1) ...)
+             body ...))))
+(letrec ((a 1)
+         (b 2)
+         (c 3))
+  (a b c))
+``
+
+In this example, @(verb)`letrec` expands to itself to generate as many temporary names as there are bindings to create.
+
+In the end, the code boils down to this:
+
+``(code scheme)
+(define transcribe-syntax-rules
+  (lambda (match template env)
+    (letrec ((exhausted (lambda (al)
+                          (fand (map (lambda (p) (or (null? (cdr p)) (not (list? (cdr p))))) al))))
+             (gcar (lambda (x)
+                     (if (pair? x)
+                         (car x)
+                         x)))
+             (gcdr (lambda (x)
+                     (if (pair? x)
+                         (cdr x)
+                         x)))
+             (submatches (lambda (match)
+                           (if (exhausted match)
+                               '()
+                               (cons (map (lambda (p)
+                                            (cons (car p)
+                                                  (gcar (cdr p))))
+                                          match)
+                                     (submatches (map (lambda (p)
+                                                        (cons (car p)
+                                                              (gcdr (cdr p))))
+                                                      match)))))))
+      (cond ((null? template)
+             '())
+            ((symbol? template)
+             (let ((match (assq template match)))
+               (if match
+                   (cdr match)
+                   (let ((match (assq template env)))
+                     (if match
+                         (cdr match)
+                         template)))))
+            ((vector? template)
+             (list->vector (transcribe-syntax-rules match (vector->list template) env)))
+            ((and (pair? template) (pair? (cdr template)) (eq? (cadr template) '...))
+             (let* ((inner (car template))
+                    (vars (scan-variables inner '())))
+                                        ;(display inner)
+                                        ;(display " ")
+                                        ;(display vars)
+                                        ;(display " ")
+                                        ;(display match)
+                                        ;(newline)
+               (append (first-n (map (lambda (match)
+                                       (transcribe-syntax-rules match (car template) env))
+                                     (submatches match))
+                                (apply min (map (lambda (var)
+                                                  (length (cdr (or (assq var match) (cons #f #f)))))
+                                                (filter (lambda (var) (assq var match)) vars))))
+                       (transcribe-syntax-rules match (cddr template) env))))
+            ((pair? template)
+             (cons (transcribe-syntax-rules match (car template) env)
+                   (transcribe-syntax-rules match (cdr template) env)))
+            (else template)))))
+``
+
+The driver is easily written, using separate passes for renaming and expanding:
+
+``(code scheme)
+(define make-transformer
+  (lambda (rules def-env)
+    (let ((literals (cadr rules))
+          (rules (cddr rules)))
+      (lambda (form)
+        (letrec ((iter (lambda (rules)
+                         (if (null? rules)
+                             (error "unmatched syntax")
+                             (let ((match (match-syntax-rules (caar rules)
+                                                              form
+                                                              literals
+                                                              '())))
+                               (if match
+                                   (transcribe-syntax-rules match
+                                                            (cadar rules)
+                                                            (map (lambda (s)
+                                                                   (or (reverse-lookup def-env s)
+                                                                       (cons s (gensym
+                                                                                (symbol->string s)))))
+                                                                 (scan-variables (cadar rules) '())))
+                                   (iter (cdr rules))))))))
+          (iter rules))))))
+
+(define core-forms '(((define . define)
+                      (define-syntax . define-syntax)
+                      (let-syntax . let-syntax)
+                      (letrec-syntax . letrec-syntax)
+                      (lambda . lambda)
+                      (if . if)
+                      (set! . set!)
+                      (quote . quote)
+                      (begin . begin))))
+
+(define make-tag-pred
+  (lambda (head)
+    (lambda (form env)
+      (and (pair? form)
+           (let ((binding (lookup env (car form))))
+             (and (pair? binding) (eq? (cdr binding) head)))))))
+
+(define definition? (make-tag-pred 'define))
+(define syntax-definition? (make-tag-pred 'define-syntax))
+(define let-syntax? (make-tag-pred 'let-syntax))
+(define letrec-syntax? (make-tag-pred 'letrec-syntax))
+(define abstraction? (make-tag-pred 'lambda))
+(define quoted? (make-tag-pred 'quote))
+
+(define proper
+  (lambda (p)
+    (cond ((null? p) '())
+          ((not (pair? p)) (list p))
+          (else (cons (car p) (proper (cdr p)))))))
+
+(define map-pair
+  (lambda (f p)
+    (cond ((null? p) '())
+          ((not (pair? p)) (f p))
+          (else (cons (f (car p)) (map-pair f (cdr p)))))))
+
+(define reverse-mapping
+  (lambda (al)
+    (map (lambda (p) (cons (cdr p) (car p))) al)))
+
+(define expand-macros
+  (lambda (program)
+    (letrec ((rename-program
+              (lambda (program)
+                (let iter ((program program)
+                           (env core-forms)
+                           (acc '()))
+                  (if (null? program)
+                      (values (reverse acc) env)
+                      (let ((form (car program)))
+                        (cond ((definition? form env)
+                               (let* ((new-name (gensym (symbol->string (cadr form))))
+                                      (new-env (cons (cons (cons (cadr form)
+                                                                 new-name)
+                                                           (car env))
+                                                     (cdr env))))
+                                 (iter (cdr program)
+                                       new-env
+                                       (cons `(define ,new-name
+                                                ,(rename-form (caddr form) new-env))
+                                             acc))))
+                              ((syntax-definition? form env)
+                               (let* ((new-name (gensym (symbol->string (cadr form))))
+                                      (new-env (cons (cons (cons (cadr form)
+                                                                 new-name)
+                                                           (car env))
+                                                     (cdr env))))
+                                 (iter (cdr program)
+                                       new-env
+                                       (cons `(define-syntax ,new-name
+                                                ,(rename-syntax-rules (caddr form)
+                                                                      new-env)
+                                                ,new-env)
+                                             acc))))
+                              (else
+                               (iter (cdr program)
+                                     env
+                                     (cons (rename-form (car program) env)
+                                           acc)))))))))
+             (rename-form
+              (lambda (form env)
+                (cond ((and (not (list? form)) (not (symbol? form)))
+                       form)
+                      ((symbol? form)
+                       (let ((res (lookup env form)))
+                         (if res
+                             (cdr res)
+                             form)))
+                      ((quoted? form env)
+                       form)
+                      ((let-syntax? form env)
+                       (let ((new-env (cons (map (lambda (macro)
+                                                   (cons (car macro)
+                                                         (gensym (symbol->string (car macro)))))
+                                                 (cadr form))
+                                            env)))
+                         `(let-syntax ,(map (lambda (macro)
+                                              (let ((kw (cdr (assq (car macro) (car new-env))))
+                                                    (rules (cadr macro)))
+                                                (list kw
+                                                      (rename-syntax-rules rules env)
+                                                      env)))
+                                            (cadr form))
+                            ,@(map (lambda (form)
+                                     (rename-form form new-env))
+                                   (cddr form)))))
+                      ((letrec-syntax? form env)
+                       (let ((new-env (cons (map (lambda (macro)
+                                                   (cons (car macro)
+                                                         (gensym (symbol->string (car macro)))))
+                                                 (cadr form))
+                                            env)))
+                         `(letrec-syntax ,(map (lambda (macro)
+                                                 (let ((kw (cdr (assq (car macro) (car new-env))))
+                                                       (rules (cadr macro)))
+                                                   (list kw
+                                                         (rename-syntax-rules rules new-env)
+                                                         new-env)))
+                                               (cadr form))
+                            ,@(map (lambda (form)
+                                     (rename-form form new-env))
+                                   (cddr form)))))
+                      ((abstraction? form env)
+                       (let* ((formals (cadr form))
+                              (body (cddr form))
+                              (formal-list (proper formals))
+                              (inner-env (cons (map (lambda (formal)
+                                                      (cons formal
+                                                            (gensym (symbol->string formal))))
+                                                    formal-list)
+                                               env)))
+                         `(lambda ,(map-pair (lambda (formal) (cdr (lookup inner-env formal))) formals)
+                            ,@(map (lambda (form) (rename-form form inner-env)) body))))
+                      (else
+                       (map (lambda (form) (rename-form form env)) form)))))
+             (rename-flat
+              (lambda (form env)
+                (cond ((and (not (list? form)) (not (symbol? form)))
+                       form)
+                      ((symbol? form)
+                       (let ((binding (lookup env form)))
+                         (if binding
+                             (cdr binding)
+                             form)))
+                      (else
+                       (map (lambda (form) (rename-flat form env)) form)))))
+             (pattern-vars
+              (lambda (pattern literals)
+                (letrec ((iter (lambda (pattern acc)
+                                 (cond ((and (not (symbol? pattern)) (not (pair? pattern)))
+                                        acc)
+                                       ((symbol? pattern)
+                                        (if (or (memq pattern literals)
+                                                (memq pattern acc)
+                                                (eq? pattern '...)
+                                                (eq? pattern '_))
+                                            acc
+                                            (cons pattern acc)))
+                                       ((pair? pattern)
+                                        (iter (cdr pattern) (iter (car pattern) acc)))))))
+                  (iter pattern '()))))
+             (rename-syntax-rules-rule
+              (lambda (rule literals env)
+                (let* ((pattern (car rule))
+                       (template (cadr rule))
+                       (vars (pattern-vars pattern literals))
+                       (new-env (cons (map (lambda (var) (cons var (gensym (symbol->string var))))
+                                           vars)
+                                      env)))
+                  (list (rename-flat pattern new-env)
+                        (rename-flat template new-env)))))
+             (rename-syntax-rules
+              (lambda (rules env)
+                (let ((literals (cadr rules))
+                      (rules (cddr rules)))
+                  `(syntax-rules ,literals
+                     ,@(map (lambda (rule) (rename-syntax-rules-rule
+                                            rule
+                                            literals
+                                            env))
+                            rules)))))
+             (expand
+              (lambda (program senv acc)
+                (if (null? program)
+                    (reverse acc)
+                    (let ((cur (car program))
+                          (rest (cdr program)))
+                      (cond ((not (list? cur))
+                             (expand rest senv (cons cur acc)))
+                            ((eq? (car cur) 'define-syntax)
+                             (expand rest
+                                     (cons (cons (cons (cadr cur)
+                                                       (make-transformer (caddr cur)
+                                                                         (cadddr cur)))
+                                                 (car senv))
+                                           (cdr senv))
+                                     acc))
+                            (else
+                             (expand rest senv (cons (expand-form cur senv) acc))))))))
+             (expand-form
+              (lambda (form senv)
+                (cond ((not (list? form))
+                       form)
+                      ((and (symbol? (car form)) (let ((res (lookup senv (car form))))
+                                                   (and res (procedure? (cdr res)) res)))
+                       => (lambda (res)
+                            (let* ((transformer (cdr res))
+                                   (transformed (transformer form)))
+                              ;(pretty-print transformed)
+                                        ;(newline)
+                              (expand-form (rename-form transformed core-forms) senv))))
+                      ((or (eq? (car form) 'let-syntax) (eq? (car form) 'letrec-syntax))
+                       (let* ((bindings (cadr form))
+                              (body (cddr form))
+                              (new-env (cons (map (lambda (binding)
+                                                    (cons (car binding)
+                                                          (make-transformer (cadr binding)
+                                                                            (caddr binding))))
+                                                  bindings)
+                                             senv)))
+                         `(begin ,@(map (lambda (form)
+                                          (expand-form form new-env))
+                                        body))))
+                      ((eq? (car form) 'lambda) ; avoid recursing into the improper list
+                       `(lambda ,(cadr form) ,@(map (lambda (form) (expand-form form senv))
+                                                    (cddr form))))
+                      (else
+                       (map (lambda (form) (expand-form form senv)) form))))))
+      (let*-values (((renamed env) (rename-program program)))
+        (expand renamed core-forms '())))))
+``
+
+I have also compiled a simple test for a syntax-rules expander:
+
+``(code scheme)
+(expand-macros
+ '((define-syntax let
+     (syntax-rules ()
+       ((_ ((name val) ...) body1 body2 ...)
+        ((lambda (name ...) body1 body2 ...)
+         val ...))))
+   (define-syntax cond
+     (syntax-rules (else =>)
+       ((_ (else result1 result2 ...))
+        (begin result1 result2 ...))
+       ((_ (test => result))
+        (let ((temp test))
+          (if temp (result temp))))
+       ((_ (test => result) clause1 clause2 ...)
+        (let ((temp test))
+          (if temp
+              (result temp)
+              (cond clause1 clause2 ...))))
+       ((_ (test)) test)
+       ((_ (test) clause1 clause2 ...)
+        (let ((temp test))
+          (if temp
+              temp
+              (cond clause1 clause2 ...))))
+       ((_ (test result1 result2 ...))
+        (if test (begin result1 result2 ...)))
+       ((_ (test result1 result2 ...)
+           clause1 clause2 ...)
+        (if test
+            (begin result1 result2 ...)
+            (cond clause1 clause2 ...)))))
+   (define-syntax letrec
+     (syntax-rules ()
+       ((letrec ((var1 init1) ...) body ...)
+        (letrec "generate temp names"
+          (var1 ...)
+          ()
+          ((var1 init1) ...)
+          body ...))
+       ((letrec "generate temp names" ()
+                (temp1 ...)
+                ((var1 init1) ...)
+                body ...)
+        (let ((var1 (if #f #f)) ...)
+          (let ((temp1 init1) ...)
+            (set! var1 temp1)
+            ...
+            body ...)))
+       ((letrec "generate temp names" (x y ...)
+                (temp ...)
+                ((var1 init1) ...)
+                body ...)
+        (letrec "generate temp names" (y ...)
+                (newtemp temp ...)
+                ((var1 init1) ...)
+                body ...))))
+   (letrec ((a 1)
+            (b 2)
+            (c 3))
+     (a b c))
+   (define odd? (lambda (x) x))
+   (define even? (lambda (x) x))
+   (let-syntax ((given-that (syntax-rules ()
+                              ((given-that test stmt1 stmt2 ...)
+                               (if test
+                                   (begin stmt1
+                                          stmt2 ...))))))
+     (let ((if #t))
+       (given-that if (set! if 'now))
+       if))
+   (let ((x 'outer))
+     (let-syntax ((m (syntax-rules () ((m) x))))
+       (let ((x 'inner))
+         (m))))
+   (letrec-syntax
+       ((my-or (syntax-rules ()
+                 ((my-or) #f)
+                 ((my-or e) e)
+                 ((my-or e1 e2 ...)
+                  (let ((temp e1))
+                    (if temp
+                        temp
+                        (my-or e2 ...)))))))
+     (let ((x #f)
+           (y 7)
+           (temp 8)
+           (let odd?)
+           (if even?))
+       (my-or x
+              (let temp)
+              (if y)
+              y)))
+   (let-syntax
+       ((my-or (syntax-rules ()
+                 ((my-or) #f)
+                 ((my-or e) e)
+                 ((my-or e1 e2 ...)
+                  (let ((temp e1))
+                    (if temp
+                        temp
+                        (my-or e2 ...)))))))
+     (let ((x #f)
+           (y 7)
+           (temp 8)
+           (let odd?)
+           (if even?))
+       (my-or x
+              (let temp)
+              (if y)
+              y)))
+   (let ((=> #f))
+     (cond (#t => 'ok)))
+   (define values 0)
+   (define-syntax id
+     (syntax-rules ()
+       ((id formals ...) (lambda (formals ...) (values formals ...)))))
+   (let ((lambda 'not-anymore))
+     (id a))))
+``
