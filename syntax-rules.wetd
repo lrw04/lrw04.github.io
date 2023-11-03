@@ -176,7 +176,7 @@ In fact, what we need is to rename all identifiers. We need to interleave renami
   (id a))
 ``
 
-should NOT have the @verb`'not-anymore` be recognized as a formal list. 
+should NOT have the @(verb)`'not-anymore` be recognized as a formal list. 
 
 During different transformations, it might not be obvious how an identifier may be used in the end, since a syntax transformer may be recursive. That's why we need to rename everything that is unbound after each transformation. Take a look at the following example:
 
