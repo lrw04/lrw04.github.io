@@ -4,6 +4,8 @@
 
 !(h 1)Implementing a loosened form of syntax-rules
 
+found out this is quite wrong, kept for archival purposes only :3
+
 Expanding out syntax-rules macros is the first step a Scheme program goes through in a compiler. Syntax-rules is the only macro system present in the R@(sup)*5*RS standard and the R@(sup)*7*RS-smal standard, two standards most implemented by implementers.
 
 There are multiple approaches to implementing syntax-rules in a Scheme implementation, including implementing explicit renaming macros and writing syntax-rules in terms of it as Chibi does, implementing syntax-case and writing syntax-rules in terms of it as Chez does, and implementing it directly. Implementing syntax-rules directly could be considered the most simple approach since it does not require the full Scheme language to be available at compile time, and this is the approach we will try out in this article.
