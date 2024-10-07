@@ -1,0 +1,70 @@
+(add-local-config '((title . "cos(2pi/17) (en)")
+                    (date . "2022/06/01")))
+---
+
+!(h 1)@(math)`\cos(2\pi/17)`
+
+This was a little adventure in math I took some days before university
+entrance exam. (useless in hindsight) But anyways, I was reading @(em)*Algebra*
+by Michael Artin and wondering, how bad it would be to calculate @(math)`\cos(2\pi/17)`?
+I mean, it's one thing to understand that it's possible to draw a heptadecagon with
+a ruler and a compass, but another to calculate the cosine of that angle you need,
+and write it down in radicals. (drawing it physically is also a different beast, but
+it was interesting enough for my deskmate at the time to do it)
+
+First, a bit of recap: for an odd prime @(math)`p`, the minimal polynomial of @(math)`\zeta_p`
+over @(math)`\Q` is @(math)`x^{p-1}+x^{p-2}+\cdots+1`, and @(math)`\Gal(\Q(\zeta_p)/\Q)
+\approx\Z_p^\times\approx C_{p-1}`. Since drawing with a ruler and compass does quadratic
+extensions in the field of reachable length ratios, to be able to draw a regular @(math)`p`-gon
+requires a subgroup series in @(math)`C_{p-1}` such that every element divided by the previous
+(smaller) element is @(math)`(C_2)`. This means @(math)`p-1=2^k`.
+Sometimes you see it stated the same except @(math)`k` itself is also a power of 2.
+Both statements are equivalent.
+Since cyclic groups are 1-gen,
+we can indeed find such a subgroup series for a Galois group with the correct order, so
+all such regular polygons can be drawn with a ruler and a compass.
+
+Gauss had proved that a regular heptadecagon can be drawn with a ruler and a compass in 1796!
+17 is not too small nor too large, so drawing a regular heptadecagon is a reasonable choice
+for time-killing.
+
+So! To compute our holy grail (right now) that is @(math)`\cos(2\pi/17)`, we will choose
+appropriate generators of the intermediate fields, but before that we would have to find out
+about subgroups of @(math)`\Z_{17}^\times`. @(math)`g=3` is a primitive root modulo 17, and
+by taking powers of it, we can derive that the subgroups are @(math)`\Z_{17}^\times`,
+@(math)`\{\pm1, \pm2, \pm4, \pm8\}`, @(math)`\{\pm1, \pm4\}`, @(math)`\{\pm1\}`, and
+@(math)`\{1\}`. By taking the sum of @(math)`\zeta` raised to the power of each element in
+the corresponding subgroup of @(math)`\Z_{17}^\times`, we get an element that's not in the
+smaller subfield of @(math)`\Q(\zeta)`. They are suitable for use as the generating elements
+corresponding to the subfield. For brievity we can define @(math)`[a_1, a_2, \cdots, a_n]`
+as @(math)`\sum \zeta^{a_i}`, and the relationship between these numbers and groups can
+be drawn as below, with the horizontal line representing Galois correspondence:
+
+:(figure)
+```(latex)
+\begin{tikzcd}
+{\Q(C=[1,-1])} \arrow[r, no head]                          & \{\pm1\} \arrow[d]                  \\
+{\Q(B=[1,4,-4,-1])} \arrow[r, no head] \arrow[u]           & {\{\pm1,\pm4\}} \arrow[d]           \\
+{\Q(A=[1,2,4,8,-8,-4,-2,-1])} \arrow[r, no head] \arrow[u] & {\{\pm1,\pm2,\pm4,\pm8\}} \arrow[d] \\
+\Q \arrow[r, no head] \arrow[u]                            & \Z_{17}^\times             
+\end{tikzcd}
+```
+:
+
+To compute @(math)`A, B, C`, the basic strategy is to compute its minimal polynomial
+over the previous field. Because we already know it's quadratic, it's enough to compute
+the square of the generating element and express it as a linear combination of that
+element and 1 with coefficients in the previous field. Do note that when the coefficient
+field is not @(math)`\Q`, it might be better to expand out the terms so you can eyeball
+coefficients in @(math)`\Q`, instead of having to do computation in an unfamiliar field.
+In theory, with this method, we would need to compute @(math)`BC^2` and unholy stuff like
+that, but luckily not! Here are the equations I found at the end:
+
+@(dmath)`A^2+A-4=0,`
+@(dmath)`(A+4)B^2-(3A+4)B-(A+4)=0`
+@(dmath)`2C^2-2BC+(B^2+B-A-4)=0`
+@(dmath)`C=2\cos\frac{2\pi}{17}`
+
+Solving these equations one by one, choosing signs maybe by estimating or reaching
+out to the scientific calculator, we obtain
+@(dmath)`\cos\frac{2\pi}{17}=\frac{\sqrt{17}-1+\sqrt{34-2\sqrt{17}}+\sqrt{4(3\sqrt{17}+17)-(\sqrt{17}+3)\sqrt{8(17-\sqrt{17})}}}{16}.`

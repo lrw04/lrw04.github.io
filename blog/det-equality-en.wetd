@@ -1,0 +1,28 @@
+(add-local-config '((title . "det(I-AA^T)=det(I-A^TA) (en)")
+                    (date . "2021/09/03")))
+---
+
+!(h 1)@(math)`\det(I-AA^T)=\det(I-A^TA)` proven in a dumb way
+
+:(div thm-en)
+Let @(math)`A` be a matrix with entries in a ring, then
+@(math)`\det(I-AA^T)=\det(I-A^TA)`.
+:
+
+:(div proof-en)
+When @(math)`A` is an invertible matrix with entries in a field, @(math)`AA^T`
+and @(math)`A^TA` are similar. It follows that @(math)`I-AA^T` and @(math)`I-A^TA`
+are also similar, and @(math)`\det(I-AA^T)=\det(I-A^TA)`.
+
+Specifically, @(math)`\GL_n(\mathbb C)` contains only solutions to @(math)`\det(I-AA^T)=\det(I-A^TA)`,
+but @(math)`\GL_n(\mathbb C)` is not some subset of an algebraic curve. Thus
+@(math)`\det(I-AA^T)-\det(I-A^TA)` is the zero polynomial in @(math)`A`'s entries.
+Its coefficients can be computed in @(math)`\mathbb Z`, so @(math)`\det(I-AA^T)=\det(I-A^TA)`
+holds for any square matrix.
+
+But for any non-square matrix, we can fill in zeroes to make the shorter side
+equal in length to the longer side on the right or bottom without changing the value
+of both sides of the equation, so it actually holds for any matrix.
+:
+
+I suspect there's a better way of proving this, but I never learned it. (insert cirno)

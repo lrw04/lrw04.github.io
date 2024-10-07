@@ -1,5 +1,6 @@
-`((title . "OJ 沙箱")
-  (date . "2023/04/16"))
+(add-local-config '((title . "OJ 沙箱")
+                    (date . "2023/04/16")
+                    (lang . "zh")))
 ---
 
 !(h 1)OJ 沙箱

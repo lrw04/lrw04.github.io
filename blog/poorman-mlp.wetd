@@ -1,5 +1,6 @@
-`((title . "穷人深度学习：MLP")
-  (date . "2023/04/05"))
+(add-local-config '((title . "穷人深度学习：MLP")
+                    (date . "2023/04/05")
+                    (lang . "zh")))
 ---
 
 !(h 1)穷人深度学习：MLP

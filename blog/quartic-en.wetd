@@ -1,0 +1,52 @@
+(add-local-config '((title . "I Tried to Solve a Quartic")
+                    (date . "2022/03/28")))
+---
+
+!(h 1)I Tried to Solve a Quartic
+
+("tried" doing all the work here)
+
+Solving a quartic is quite a bit harder than solving an equation for 4 times!
+(pun in Chinese doesn't work here) I saw other people playing with algebraic
+equations and they seemed to like it, so I thought I should try solving one
+too! I already read about solving cubics in Artin's book, so the only remaining
+mountain is the quartic. By knowing about resolvent cubics, I managed to
+derive a formula in an afternoon. It's a bit different from those I could find
+on the Internet, but I did manage to solve a quartic using that, so I guess
+it works sometimes?? Didn't investigate further though.
+
+We'll setup some notation for the equation. The equation we'll solve shall be
+@(dmath)`f(x)=x^4+s_2x^2-s_3x+s_4=0,` and we'll name the solutions @(math)`x_i`.
+This makes @(math)`s_n` coincide with @(math)`\sum x_{i_1}\cdots x_{i_n}`, which
+brings some convenience. I set @(math)`s_1` to be zero because depressed quartics
+are easier to deal with in general, and giving a quartic depression is a relatively
+simple process.
+
+The next step is to solve the resolvent. Let
+@(dmath)`b_1=x_1x_2+x_3x_4,\\ b_2=x_1x_3+x_2x_4,\\ b_3=x_1x_4+x_2x_3,`
+@(math)`b` are solutions to a cubic whose coefficients we can express in terms
+of @(math)`s`:
+@(dmath)`g(x)=(x-b_1)(x-b_2)(x-b_3)=x^3-s_2x^2-4s_4x-s_3^2+4s_2s_4.`
+
+Then let
+@(dmath)`c_1=x_1x_2-x_3x_4,\\ c_2=x_1x_3-x_2x_4,\\ c_3=x_1x_4-x_2x_3,`
+we have
+@(dmath)`b_i^2-c_i^2=4s_4,`
+so we can solve for @(math)`c_i`.
+
+Considering
+@(dmath)`(x_2+x_3+x_4)^2=x_2^2+x_3^2+x_4^2+2x_2x_3+2x_2x_4+2x_3x_4,`
+and
+@(dmath)`x_2x_3=\frac{b_3-c_3}{2},\\ x_2x_4=\frac{b_2-c_2}{2},\\ x_3x_4=\frac{b_1-c_1}{2},\\ x_1^2+x_2^2+x_3^2+x_4^2=s_1^2-2s_2,`
+we get
+@(dmath)`x_1^2=(s_1-x_1)^2=-x_1^2+s_1^2-2s_2+s_2-c_1-c_2-c_3,\\ x_1=\sqrt{\frac{-s_2-\sqrt{b_1^2-4s_4}-\sqrt{b_2^2-4s_4}-\sqrt{b_3^2-4s_4}}{2}}.`
+
+The radicals here don't give any information regarding which branch it is,
+so applying this procedure would involve a lot of verification of previous
+equations, even after you arrive at a result. I tried to solve
+@(math)`x^4-15 x^2-10 x+24`, and it worked. Yay?
+
+I also tried expanding out everything, plugging in solutions to the resolvent
+from Mathematica, and the solution of @(math)`x^4+bx^2-cx+d=0` is: (drumroll)
+@(dmath)`x=\sqrt{\frac{-b-\sqrt{\left(\frac{\sqrt[3]{2 b^3+\sqrt{\left(2 b^3-72 b d+27 c^2\right)^2+4 \left(-b^2-12 d\right)^3}-72 b d+27 c^2}}{3 \sqrt[3]{2}}-\frac{\sqrt[3]{2} \left(-b^2-12 d\right)}{3 \sqrt[3]{2 b^3+\sqrt{\left(2 b^3-72 b d+27 c^2\right)^2+4 \left(-b^2-12 d\right)^3}-72 b d+27 c^2}}+\frac{b}{3}\right)^2-4 d}-\sqrt{\left(\frac{\sqrt[3]{2 b^3+\sqrt{\left(2 b^3-72 b d+27 c^2\right)^2+4 \left(-b^2-12 d\right)^3}-72 b d+27 c^2}}{3 \sqrt[3]{2}}-\frac{\sqrt[3]{2} \left(-b^2-12 d\right)}{3 \sqrt[3]{2 b^3+\sqrt{\left(2 b^3-72 b d+27 c^2\right)^2+4 \left(-b^2-12 d\right)^3}-72 b d+27 c^2}}+\frac{b}{3}\right)^2-4 d}-\sqrt{\left(\frac{\sqrt[3]{2 b^3+\sqrt{\left(2 b^3-72 b d+27 c^2\right)^2+4 \left(-b^2-12 d\right)^3}-72 b d+27 c^2}}{3 \sqrt[3]{2}}-\frac{\sqrt[3]{2} \left(-b^2-12 d\right)}{3 \sqrt[3]{2 b^3+\sqrt{\left(2 b^3-72 b d+27 c^2\right)^2+4 \left(-b^2-12 d\right)^3}-72 b d+27 c^2}}+\frac{b}{3}\right)^2-4 d}}{2}}.`
+That is a lot of overflow.

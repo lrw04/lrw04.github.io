@@ -1,0 +1,57 @@
+(add-local-config '((title . "about")
+                    (page . #t)))
+---
+
+!(h 1)About myself
+
+My name is 40whirl or lrw04, and I am a woman playing with computers.
+My pronouns are she/they.
+
+Stuff I do:
+
+:(ul)
+!(item)learn some math (various), cs (various), and ee (various?)
+!(item)consume media (like list down there)
+!(item)cube (3-style is endless...)
+!(item)make art (someday)
+:
+
+like list (incomplete, do ask for more):
+
+:(ul)
+!(item)mario kart 8 dx
+!(item)celeste
+!(item)arcaea
+!(item)chunithm
+!(item)bloom into you
+!(item)adachi and shimamura
+!(item)chris potter
+!(item)dream theater
+!(item)emerson, lake & palmer
+!(item)john escreet
+!(item)jordan rudess
+!(item)king crimson
+!(item)liquid tension experiment
+!(item)opeth
+!(item)sevish
+!(item)slint
+!(item)symphony x
+!(item)tigran hamasyan
+!(item)tricot
+!(item)stravinsky stuff
+!(item)some rachmaniov
+:
+
+contacts (no links because maybe spam reduction?):
+
+:(ul)
+!(item)Mastodon: @@40whirl@@tech.lgbt
+!(item)Github: @@lrw04
+!(item)Matrix: @(em)*ask me*
+:
+
+links to other people's blogs:
+
+:(ul)
+!(item)@(link "https://conless.dev/")*Conless*
+:

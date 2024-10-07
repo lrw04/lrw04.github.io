@@ -1,10 +1,13 @@
-`((title . "Implementing a loosened form of syntax-rules")
-  (date . "2023/10/26"))
+(add-local-config '((title . "Implementing a loosened form of syntax-rules")
+                    (date . "2023/10/26")))
 ---
 
-!(h 1)Implementing a loosened form of syntax-rules
+!(h 1)Implementing a loosened form of syntax-rules (wrong :()
 
 found out this is quite wrong, kept for archival purposes only :3
+
+(editor note: if you want to actually learn about Scheme frontends, read
+mflatt's @(em)*Binding as Sets of Scopes*)
 
 Expanding out syntax-rules macros is the first step a Scheme program goes through in a compiler. Syntax-rules is the only macro system present in the R@(sup)*5*RS standard and the R@(sup)*7*RS-smal standard, two standards most implemented by implementers.
 

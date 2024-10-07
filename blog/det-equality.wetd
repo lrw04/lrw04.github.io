@@ -1,5 +1,6 @@
-`((title . "det(I-AA^T)=det(I-A^TA)")
-  (date . "2021/09/03"))
+(add-local-config '((title . "det(I-AA^T)=det(I-A^TA)")
+                    (date . "2021/09/03")
+                    (lang . "zh")))
 ---
 
 !(h 1)@(math)`\det(I-AA^T)=\det(I-A^TA)`

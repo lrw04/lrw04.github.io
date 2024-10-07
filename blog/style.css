@@ -2,14 +2,6 @@ html {
     font-family: sans-serif;
 }
 
-nav img {
-    max-height: 2em;
-    border: 1pt solid #ddd;
-    border-radius: 0.5ex;
-    padding: 0.5ex;
-    margin-right: 0.5ex
-}
-
 nav a {
     color: darkblue;
     text-decoration: none;
@@ -50,7 +42,7 @@ footer {
     text-align: center;
 }
 
-.pride {
+.trans-pride {
     display: inline-block;
     width: 10ex;
     aspect-ratio: 14 / 9;
@@ -74,7 +66,7 @@ th:last-child {
     padding-right: 0;
 }
 
-.thm, .proof, .problem, .solution {
+.thm, .proof, .problem, .solution, .thm-en, .proof-en, .problem-en, .solution-en {
     padding-left: 1ex;
     border-left: 0.5ex solid lightgray;
 }
@@ -98,3 +90,25 @@ th:last-child {
     content: '解';
     font-weight: bold;
 }
+
+.thm-en::before {
+    content: 'Theorem';
+    font-weight: bold;
+}
+
+.proof-en::before {
+    content: 'Proof';
+    font-weight: bold;
+}
+
+.problem-en::before {
+    content: 'Problem';
+    font-weight: bold;
+}
+
+.solution-en::before {
+    content: 'Solution';
+    font-weight: bold;
+}
+
+.katex { font-size: 1em !important; }

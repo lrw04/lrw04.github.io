@@ -1,0 +1,53 @@
+(add-local-config '((title . "Orientation of Rubik's Cube Pieces")
+                    (date . "2021/07/27")))
+---
+
+!(h 1)Orientation of Rubik's Cube Pieces
+
+Often in ZZ tutorials, a definition for edge orientation is given as: give the colors
+of U/D sides the highest priority, followed by colors of F/B sides and L/R sides. For
+each edge, if the direction from high to low priority is the same between the two colors
+of the edge itself and of the two center pieces adjacent to the edge, iff it's oriented
+correctly. You would use F, F', B, or B' to flip the orientation of the four edges on
+the side you rotated. With this definition, an @(verb)`x` move doesn't change the orientation of
+any edge, while a @(verb)`y` move does. This shows us that the orientation of edges are
+dependant only on an axis, and not on the whole orientation of the cube. (i.e. the center
+pieces)
+
+Orientating the edges of a cube also puts it in @(math)`H_1:=\langle \mathrm{U, D, L, R, F^2, B^2}\rangle`.
+(it's supposed to make LL faster, because ZBLL is less than 1LLL but "reasonable" and such)
+It might be natural to ask, if we orient the edges along the F/B axis, then orient the edges
+along the (say) L/R axis with moves in @(math)`H_1`, will the cube enter
+@(math)`H_2:=\langle \mathrm{U, D, L^2, R^2, F^2, B^2}\rangle`?
+
+Unfortunately no. The corners wouldn't be oriented correctly. For each corner piece,
+we can define its orientation number as the number of clockwise rotations it takes to
+make the face of the corner with the color of U/D actually on one of U/D faces. Then we
+sum them up for all 8 corners modulo 3, and obtain 0. This can be proven by calculating
+the number added to the sum for each quarter face turn. However, none of the moves in
+@(math)`H_2` will change the orientation number of any single corner.
+
+To prove edge orientation on a single axis implies a solution in @(math)`H_1`, we use
+a similar argument: @(verb)`[y' x': [F U2 F', R D2 R']]` is a move that changes the
+orientation of the corners at ULB and DRF, so we can still reorient corners arbitrarily
+using moves in @(math)`H_1`. (ZZ itself can be seen as a constructive proof of this,
+if you're lazy, but you need to generate OLL and PLL with moves in @(math)`H_1`, so
+beginner's last layer is better for your brain)
+
+These results can be applied to calculating the number of different states a cube can
+have: we can calculate numbers of states for the cube's permutation and orientation
+respectively and multiply them up, because we can force a state to be reached by first
+orientating the pieces correctly, then permute them to the correct place. 3-cycles with
+setups (that's conjugating) generates @(math)`A_8` and @(math)`A_{12}` for the corner and
+edge permutation respectively, but a quarter turn is an odd permutation in terms of both
+corners and edges. That makes @(math)`8!12!/2` permutations. It's already established
+that corner orientation has @(math)`3^8/3` states. There are 12 edges and you can put
+different edges into the F side and flip their orientations at once, so there are
+@(math)`2^{12}/2` edge orientations. Multiplying them gives 43252003274489856000 total
+states.
+
+(Editor note: I got tired while writing)
+
+You can also easily derive some facts about parity in blindfolded solving: exactly half of
+the states require parity (not if you exclude some like WCA does though), their solutions
+have an odd number of quarter turns.

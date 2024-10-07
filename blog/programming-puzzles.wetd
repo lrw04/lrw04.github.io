@@ -1,0 +1,118 @@
+(add-local-config '((title . "Some Programming Puzzles")
+                    (date . "2024/10/06")))
+---
+
+!(h 1)Some Programming Puzzles
+
+I hastefully prepared a few programming puzzles for a little casual contest
+last year, and I never did anything afterwards... In the rare case that you
+want to verify a solution, I can either add you to the Codeforces group from
+last year (that's where it was held), or send you everything needed to run
+the judge yourself.
+
+@(link "contest-36432-en.pdf")*The problem statements from last year* are honestly
+a bit difficult to read, but somehow the four people that participated could
+read them without me having to clarify anything. Weird. You will have to read
+that for any chance of having the context for anything below though. One thing
+in common is weird and bolted-on story lines. Bear with them (evil)
+
+I'll skip the first problem because I really needed to consider if whitespace
+and capitalization in a gender specification should be meaningful, and even
+if everybody agrees it shouldn't, the solution to the programming problem
+is not very interesting. On to the second problem :3
+
+!(h 2)Trans Rights 🏳️‍⚧️
+
+(a whopping two (2) trans pride flags on this page!)
+
+I did end up letting bruteforce solutions pass (one of them passed and another
+didn't, for some reason), so maybe the problem sizes
+should be a bit more than that, @(math)`3\times10^4` or something like that.
+The computers working for Codeforces and Codeforces Polygon seem to be different,
+and I was not able to determine an appropriate bound that work for both websites.
+
+There is a simple dynamic programming solution to the problem on a sequence.
+Consider recording the number of possible ways to walk through a sequence of
+character sets and appending the substring of 'transrights' starting from
+@(math)`i` to @(math)`j` (indices start from 1, for implementation conveniences)
+as a matrix, then @(math)`C(i, j)` can be found in the matrix. When we
+concatenate two sequences of character sets, the corresponding matrix multiplies.
+
+In order to use this idea on the tree we're given, we need to use heavy-light
+decomposition and split the query into at most @(math)`O(\log n)` subqueries
+that lie on the same path, and use a data structure that can handle single-point
+modifications and interval semigroup products. Because a path can be walked in
+two different directions and matrix multiplication is not commutative, we need
+two different instances, with their definitions for multiplication to be regular
+matrix multiplication for one of them and the opposite for the other.
+
+There are a few constant factor optimizations you need, but honestly they are
+not very interesting. Sometimes @(verb)`(a + b >= p) ? a + b - p : a + b` is
+faster than @(verb)`(a + b) % p` (when a and b are already natural numbers less
+than p), and when doing the matrix multiplication,
+in the second loop in, put the entry you're multiplying others with in a local
+variable, avoid doing the empty half of the lower triangle matrix, etc.
+
+I tried to make the solver reflect on the assumptions data structures impose
+on the algebraic structure of the stuff being computed (when I was learning
+them, tutorials were like "let's add together numbers written on weird
+shapes!" sure, weird shapes are weird, but numbers can also be weird!),
+but the problem ended
+up being a bit lame :( Segment trees basically solves the whole "single-point
+modification with interval associative product" problem once and for all.
+Finger trees need an
+Abelian group to work with (for interval product and not just prefix product)
+and it's a mere constant factor optimization over using a segment tree.
+
+!(h 2)Hash
+
+This problem is somewhat of a paper tiger because there definitely is a way
+of guessing to an accepted program, but the problem ended up unsolved! (should
+I really be excited? it could be a technical problem)
+
+Anyways! By viewing the @(math)`2^k`'s digit in a 32-bit unsigned integer as
+the coefficient for the @(math)`x^k` term in a polynomial with coefficients in
+@(math)`\F_2`, the @(verb)`uint32_t`'s corresponds nicely to elements in
+@(math)`\F_2[x]/(p)\approx\F_{2^{32}}:=F` (that p is indeed irreducible), and
+that's basically it. XORing the integer is adding the polynomial, and
+@(verb)`conv`-ing the integer is multiplying the polynomial modulo the polynomial
+corresponding to @(verb)`p`. The length of the answer is 1 iff @(math)`a\mapsto a^k`
+is not an automorphism, and that's equivalent to @(math)`\gcd(k, |F^\times|)>1`.
+We can guess a primitive root @(math)`g` once and output 1 and
+@(math)`g^{|F^\times|/\gcd(k, |F^\times|)}` in this case.
+
+If we couldn't find a collision of length 1, we definitely can find one of
+length 2 by the pigeonhole principle. Just fixing three elements and solving
+for the rest is enough. When you want to compute a multiplicative inverse
+using exponentiation, do note that the order of the multiplicative group is
+@(math)`(2^{32}-1)` and not @(math)`\vphi(2^{32})`.
+
+!(h 2)Pie
+
+Bruteforcing and printing out the answer for some points tells us that answers
+are small, in fact no more than 9. It might be possible to have a table of
+which answers comes from where, considering the answers viewed as a sequence
+is also roughly increasing. Adding it with itself shifted one place takes care
+of the roughness as a whole though. Just bisect the minimum @(math)`i` satisfying
+@(math)`A_i+A_{i+1}=k` (@(math)`A_i` for answer at @(math)`i`) for every
+@(math)`k` and you're good to go! Note that
+double precision floats are not precise enough if you add the terms naively.
+Use a fixed-point number with bigints.
+
+!(h 2)noitatumreP
+
+This is not very interesting imo as it's mostly manipulating stuff, but I'll
+explain everything anyways.
+
+See that @(math)`(\cdot)+1` on the denominator? That's what you get integrating
+@(math)`x^{(\cdot)}` from 0 to 1. That @(math)`(-1)^{\tau(p)}`? From a determinant.
+Let @(math)`M_n` be the @(math)`n\times n` matrix with @(math)`x` on the main
+diagonal and @(math)`1` on the two diagonals adjacent to the main one, then
+@(math)`\det M_n` has the terms we need. We just need to calculate the sum of
+coefficients of all terms in @(math)`\det M_n` with an exponent congruent to
+every @(math)`k` modulo @(math)`m`. But since
+@(math)`\det M_n=x\det M_{n-1}-\det M_{n-2}`, we can encode the sums for @(math)`M_n`
+and @(math)`M_{n-1}` into a vector and multiply a transition matrix onto it
+@(math)`n` times. If you're not careful you might trip up when @(math)`m=1`
+because you're assigning entries in the transition matrix and not accumulating
+them.
