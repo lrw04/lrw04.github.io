@@ -60,7 +60,7 @@ shapes!" sure, weird shapes are weird, but numbers can also be weird!),
 but the problem ended
 up being a bit lame :( Segment trees basically solves the whole "single-point
 modification with interval associative product" problem once and for all.
-Finger trees need an
+Fenwick trees need an
 Abelian group to work with (for interval product and not just prefix product)
 and it's a mere constant factor optimization over using a segment tree.
 
