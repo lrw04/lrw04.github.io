@@ -44,7 +44,9 @@
   `(footer ()
            ((p ()
                ((a ((href . "feed.xml"))
-                   ("RSS"))))
+                   ((img ((src . "blobcat-rss.png")
+                          (style . "height: 2em")
+                          (alt . "RSS icon but blobcat")))))))
             (p ()
                ("this is a "
                 (a ((href . "https://github.com/lrw04/bwog/"))
