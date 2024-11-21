@@ -77,7 +77,12 @@
                                          ("go to the "
                                           (a ((href . "about.html"))
                                              ("about"))
-                                          " page for bits about myself.")))
+                                          " page for bits about myself."))
+                                      (p ()
+                                         ("there is also a dedicated page for random facts,"
+                                          "at "
+                                          (a ((href . "facts.html"))
+                                             ("facts.html.")))))
                                     '())
                               (table ()
                                      ((tbody ()

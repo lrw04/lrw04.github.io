@@ -1,0 +1,26 @@
+(add-local-config '((title . "random facts")
+                    (page . #t)))
+---
+
+!(h 1)An Assortment of Random Facts
+
+Most of them I tooted on the Freddyverse!
+
+:(ul)
+!(item)There is a French @(link "https://apps.kde.org/neochat/")*neocat*
+!(item)Intel fumbled the versioning for their @(link "https://www.intel.com/content/www/us/en/content-details/814198/intel-64-and-ia-32-architectures-optimization-reference-manual-volume-1.html")*optimization reference*, with a "version 049" newer than 050 but with a filename that says 050
+!(item)In Mario Kart 8 Deluxe, you can't superhorn away a squid
+!(item)Xilinx has an old logo that's :3 upside down: @(link "https://commons.wikimedia.org/wiki/File:Xilinx_Headquarters_Sign_-_San_Jose_-_California.jpg")*image*
+!(item)It's 2024, and you still need to put the dividend in a fixed register pair when doing integer division on AMD64 CPUs
+!(item)Unix haters nowadays are often Unix-brained because they are exposed to Unices a lot
+!(item)Shin Megami Tensei is abbreviated the same as Simultaneous Multi-Threading
+!(item)The opposite to Static Single-Assignment, Dynamic Multi-Assignment is abbreviated the same as Direct Memory Access
+!(item)There is a computer toucher Michael Jackson: @(link "https://dl.acm.org/doi/abs/10.1145/225014.225041")*article*
+!(item)If you lose track of where your hardware went in your house, you can frame it as the house has the hardware, which sounds like you have a smart home arrangement or something
+!(item)There is an album named @(link "https://en.wikipedia.org/wiki/Closure/Continuation")*Closure/Continuation*
+!(item)Single Unix Specification is SUS
+!(item)0x10 is actually 8 more than 0x08. It's also two times of 0x08
+!(item)Vi keybinds make less of a mess in a regular editor than Emacs keybinds do, except when you're on macOS
+!(item)In New Super Mario Bros, you can stomp on a dry bone and see its head fall into lava, but it will still revive after a while
+!(item)gensym kind of looks like genshin
+:
